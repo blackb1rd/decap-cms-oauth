@@ -95,7 +95,7 @@ pub async fn callback(
 
     match client
         .exchange_code(code)
-        .request_async(|req| (state.http_client)(req))
+        .request_async(&state)
         .await
     {
         Ok(token) => (
