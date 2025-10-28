@@ -93,11 +93,7 @@ pub async fn callback(
 
     let client = create_client(redirect_url);
 
-    match client
-        .exchange_code(code)
-        .request_async(&state)
-        .await
-    {
+    match client.exchange_code(code).request_async(&state).await {
         Ok(token) => (
             StatusCode::OK,
             login_response("success", token.access_token()),

@@ -44,7 +44,8 @@ const OAUTH_AUTHORIZE_PATH: &str = "/login/oauth/authorize";
 const OAUTH_SCOPES: &str = "repo";
 const OAUTH_PROVIDER: &str = "github";
 
-type ConfiguredClient = BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
+type ConfiguredClient =
+    BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
 
 fn get_var(var: &str) -> String {
     env::var(var).unwrap_or_else(|_| panic!("{} environment variable should be defined", var))
