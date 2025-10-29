@@ -37,7 +37,7 @@ jobs:
 
           # Pull the latest image and restart the service on the server
           ssh -i $SSH_KEY_PATH -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SSH_USER_HOST }} " \
-            echo '$GHCR_TOKEN_ESCAPED' | docker login ghcr.io -u ${{ github.actor }} --password-stdin && \
+            echo $GHCR_TOKEN_ESCAPED | docker login ghcr.io -u ${{ github.actor }} --password-stdin && \
             docker pull ghcr.io/blackb1rd/decap-cms-oauth:latest && \
             docker stop decap-cms-oauth-app 2>/dev/null || true && \
             docker rm decap-cms-oauth-app 2>/dev/null || true && \
