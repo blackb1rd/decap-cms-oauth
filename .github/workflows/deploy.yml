@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   deploy:
@@ -19,6 +20,8 @@ jobs:
     environment: deployment
     steps:
       - name: Deploy to Server
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Setup SSH
           SSH_KEY_PATH="$HOME/.ssh/id_ed25519"
@@ -30,12 +33,14 @@ jobs:
           OAUTH_CLIENT_ID_ESCAPED=$(printf '%q' "${{ secrets.OAUTH_CLIENT_ID }}")
           OAUTH_SECRET_ESCAPED=$(printf '%q' "${{ secrets.OAUTH_SECRET }}")
           OAUTH_ORIGINS_ESCAPED=$(printf '%q' "${{ secrets.OAUTH_ORIGINS }}")
+          GHCR_TOKEN_ESCAPED=$(printf '%q' "$GHCR_TOKEN")
 
           # Pull the latest image and restart the service on the server
           ssh -i $SSH_KEY_PATH -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SSH_USER_HOST }} " \
+            echo $GHCR_TOKEN_ESCAPED | docker login ghcr.io -u ${{ github.actor }} --password-stdin && \
             docker pull ghcr.io/blackb1rd/decap-cms-oauth:latest && \
-            docker stop decap-cms-oauth-app || true && \
-            docker rm decap-cms-oauth-app || true && \
+            docker stop decap-cms-oauth-app 2>/dev/null || true && \
+            docker rm decap-cms-oauth-app 2>/dev/null || true && \
             docker run -d \
               --name decap-cms-oauth-app \
               --restart always \
