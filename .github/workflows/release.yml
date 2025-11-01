@@ -22,26 +22,26 @@ jobs:
         id: changelog
         run: |
           # Get the previous tag
-          PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed -n '2p')
+          PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+' | sed -n '2p')
           CURRENT_TAG=${GITHUB_REF#refs/tags/}
-          
+
           echo "current_tag=$CURRENT_TAG" >> $GITHUB_OUTPUT
-          
+
           if [ -z "$PREVIOUS_TAG" ]; then
-            # First release - get all commits
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+            # First release - limit to last 50 commits
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges --max-count=50)
           else
             # Get commits since previous tag
             CHANGELOG=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges)
           fi
-          
+
           # Create changelog file
           {
             echo "## What's Changed"
             echo ""
             echo "$CHANGELOG"
           } > CHANGELOG.txt
-          
+
           echo "Generated changelog for $CURRENT_TAG"
 
       - name: Create GitHub Release
