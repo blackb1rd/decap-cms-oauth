@@ -1,3 +1,4 @@
+
 name: Create Release
 
 on:
@@ -37,16 +38,16 @@ jobs:
         run: |
           # Get the latest tag
           LATEST_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-          
+
           if [ -z "$LATEST_TAG" ]; then
             # No tags exist, start with v1.0.0
             LATEST_TAG="v0.0.0"
           fi
-          
+
           # Remove 'v' prefix and split version
           VERSION=${LATEST_TAG#v}
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-          
+
           # Bump version based on input
           case "${{ github.event.inputs.version_bump }}" in
             major)
@@ -62,24 +63,28 @@ jobs:
               PATCH=$((PATCH + 1))
               ;;
           esac
-          
+
           NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
-          
+
           echo "Previous tag: $LATEST_TAG"
           echo "New tag: $NEW_TAG"
           echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
-          
+
           # Configure git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           # Create and push the new tag
           git tag -a "$NEW_TAG" -m "Release $NEW_TAG"
           git push origin "$NEW_TAG"
 
   build:
     name: Build ${{ matrix.target }}
-    if: always() && (github.event_name == 'push' || needs.create-tag.result == 'success')
+    # Only run build when a tag push triggered this workflow OR when the create-tag
+    # job (from a workflow_dispatch) succeeded and produced a new tag.
+    if: >-
+      (startsWith(github.ref, 'refs/tags/') && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && needs.create-tag.outputs.new_tag != '')
     needs: [create-tag]
     runs-on: ${{ matrix.os }}
     strategy:
@@ -149,7 +154,7 @@ jobs:
 
   release:
     name: Create Release
-    needs: build
+    needs: [create-tag, build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -164,10 +169,21 @@ jobs:
 
       - name: Generate changelog
         id: changelog
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          # Use the created tag when available, otherwise empty string
+          CREATED_TAG: ${{ needs.create-tag.outputs.new_tag || '' }}
         run: |
-          # Get the previous tag
+          # Prefer the tag created by the create-tag job when this run was started
+          # via workflow_dispatch. Otherwise, use the tag from GITHUB_REF for tag pushes.
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$CREATED_TAG" != "" ]; then
+            CURRENT_TAG="$CREATED_TAG"
+          else
+            CURRENT_TAG=${GITHUB_REF#refs/tags/}
+          fi
+
+          # Get the previous tag (the tag before the current one)
           PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+' | sed -n '2p')
-          CURRENT_TAG=${GITHUB_REF#refs/tags/}
 
           echo "current_tag=$CURRENT_TAG" >> $GITHUB_OUTPUT
 
