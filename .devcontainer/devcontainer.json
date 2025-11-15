@@ -5,6 +5,8 @@
 		3005
 	],
 	"containerEnv": {
+		"PORT": "3005",
+		"ADDRESS": "127.0.0.1",
 		"OAUTH_CLIENT_ID": "",
 		"OAUTH_SECRET": "",
 		"OAUTH_ORIGINS": "http://localhost:3005"

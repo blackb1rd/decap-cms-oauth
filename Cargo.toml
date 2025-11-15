@@ -4,7 +4,7 @@ version = "1.0.0"
 edition = "2024"
 authors = ["Prachya Saechua <blackb1rd.mov@gmail.com>"]
 license = "MIT"
-repository = "https://github.com/augustogunsch/decap-cms-oauth"
+repository = "https://github.com/blackb1rd/decap-cms-oauth"
 description = """
 OAuth server for Decap CMS for GitHub.
 """

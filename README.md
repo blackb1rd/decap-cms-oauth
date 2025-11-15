@@ -41,19 +41,22 @@ To run the application using Docker, first build the image:
 docker build -t decap-cms-oauth .
 ```
 
-Then, run the container with the required environment variables:
+Then, run the container with the required environment variables. The container uses the `PORT` environment
+variable (default 3005). Map it to a host port with `-p` as usual.
 
 ```shell
 docker run \
   -e OAUTH_CLIENT_ID=<your_client_id> \
   -e OAUTH_SECRET=<your_secret> \
   -e OAUTH_ORIGINS=<your_origins> \
+  -e PORT=3005 \
+  -e ADDRESS=127.0.0.1 \
   -p 8080:3005 \
   -v /etc/ssl/certs:/etc/ssl/certs:ro \
   decap-cms-oauth
 ```
 
-The application will be available at `http://localhost:8080`.
+The application will be available at `http://localhost:8080` (host port 8080 mapped to container's `PORT`).
 
 ### Using the Pre-built Image
 
@@ -63,13 +66,15 @@ Alternatively, you can pull the pre-built image from the GitHub Container Regist
 docker pull ghcr.io/blackb1rd/decap-cms-oauth:latest
 ```
 
-Then, run the container:
+Then, run the container. You can override the container `PORT` if you wish.
 
 ```shell
 docker run \
   -e OAUTH_CLIENT_ID=<your_client_id> \
   -e OAUTH_SECRET=<your_secret> \
   -e OAUTH_ORIGINS=<your_origins> \
+  -e PORT=3005 \
+  -e ADDRESS=127.0.0.1 \
   -p 8080:3005 \
   -v /etc/ssl/certs:/etc/ssl/certs:ro \
   ghcr.io/blackb1rd/decap-cms-oauth:latest
@@ -99,7 +104,10 @@ server {
     ssl_certificate_key /path/to/your/privkey.pem;
 
     location / {
-        proxy_pass http://localhost:3005;
+  # Proxy to the application container's PORT (default 3005). If you run the container
+  # on a different host or provide a full ADDRESS with port (ADDRESS=host:port), adjust
+  # proxy_pass accordingly. Example (default):
+  proxy_pass http://localhost:3005;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

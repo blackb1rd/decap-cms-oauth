@@ -22,6 +22,7 @@ jobs:
       - name: Deploy to Server
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
         run: |
           # Setup SSH
           SSH_KEY_PATH="$HOME/.ssh/id_ed25519"
@@ -34,6 +35,13 @@ jobs:
           OAUTH_SECRET_ESCAPED=$(printf '%q' "${{ secrets.OAUTH_SECRET }}")
           OAUTH_ORIGINS_ESCAPED=$(printf '%q' "${{ secrets.OAUTH_ORIGINS }}")
           GHCR_TOKEN_ESCAPED=$(printf '%q' "$GHCR_TOKEN")
+          # DEPLOY_PORT must be provided as a repository secret. Fail early if missing.
+          DEPLOY_PORT_ESCAPED=$(printf '%q' "$DEPLOY_PORT")
+          if [ -z "$DEPLOY_PORT_ESCAPED" ]; then
+            echo "error: DEPLOY_PORT secret is not set. Please configure repository secret DEPLOY_PORT." >&2
+            exit 1
+          fi
+          DOCKER_PORT=$DEPLOY_PORT_ESCAPED
 
           # Pull the latest image and restart the service on the server
           ssh -i $SSH_KEY_PATH -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SSH_USER_HOST }} " \
@@ -44,7 +52,9 @@ jobs:
             docker run -d \
               --name decap-cms-oauth-app \
               --restart always \
-              -p 3005:3005 \
+              -p $DOCKER_PORT:$DOCKER_PORT \
+              -e PORT=$DOCKER_PORT \
+              -e ADDRESS=0.0.0.0 \
               -v /etc/ssl/certs:/etc/ssl/certs:ro \
               -e OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID_ESCAPED \
               -e OAUTH_SECRET=$OAUTH_SECRET_ESCAPED \
