@@ -217,6 +217,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          # Ensure the release is associated with the correct tag when started via workflow_dispatch
+          tag_name: ${{ steps.changelog.outputs.current_tag }}
           name: Release ${{ steps.changelog.outputs.current_tag }}
           body_path: CHANGELOG.txt
           draft: false
